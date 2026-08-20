@@ -29,6 +29,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <rclcpp/rclcpp.hpp>
 
 class GPUMonitorBase : public rclcpp::Node
 {

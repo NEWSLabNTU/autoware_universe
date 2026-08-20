@@ -27,6 +27,7 @@
 #include <climits>
 #include <map>
 #include <string>
+#include <rclcpp/rclcpp.hpp>
 
 class MemMonitor : public rclcpp::Node
 {

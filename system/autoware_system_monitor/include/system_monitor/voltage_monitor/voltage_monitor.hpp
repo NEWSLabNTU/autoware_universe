@@ -25,6 +25,7 @@
 #include <climits>
 #include <regex>
 #include <string>
+#include <rclcpp/rclcpp.hpp>
 class VoltageMonitor : public rclcpp::Node
 {
 public:
