@@ -36,11 +36,20 @@ set(_env_vars
 )
 
 # 3. Define the Generation Target (generator writes to CWD/c_generated_code → binary dir)
+# Single-output stamp: a multi-file OUTPUT list makes the Makefile
+# generator run this recipe once per consumed output under `make -j`,
+# and parallel generator invocations race (acados_template crashes on
+# the half-written c_generated_code dir). One stamp = one invocation;
+# the generated files are BYPRODUCTS.
+set(ACADOS_GEN_STAMP "${CMAKE_CURRENT_BINARY_DIR}/acados_codegen.stamp")
 add_custom_command(
-  OUTPUT ${GENERATED_MPC_FILES}
+  OUTPUT ${ACADOS_GEN_STAMP}
+  BYPRODUCTS ${GENERATED_MPC_FILES}
+  COMMAND ${CMAKE_COMMAND} -E rm -rf ${GEN_DIR}
   COMMAND ${CMAKE_COMMAND} -E env ${_env_vars}
     ${ACADOS_SOURCE_DIR}/.venv/bin/python3
     ${CMAKE_CURRENT_SOURCE_DIR}/generators/path_tracking_mpc_spatial.py
+  COMMAND ${CMAKE_COMMAND} -E touch ${ACADOS_GEN_STAMP}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/generators/path_tracking_mpc_spatial.py
@@ -50,7 +59,7 @@ add_custom_command(
 )
 
 # Create a logical target for the generation to ensure proper dependency tracking
-add_custom_target(generate_acados_code DEPENDS ${GENERATED_MPC_FILES})
+add_custom_target(generate_acados_code DEPENDS ${ACADOS_GEN_STAMP})
 
 # 4. acados_interface library
 add_library(acados_interface SHARED
