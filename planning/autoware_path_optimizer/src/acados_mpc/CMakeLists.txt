@@ -45,8 +45,11 @@ set(ACADOS_GEN_STAMP "${CMAKE_CURRENT_BINARY_DIR}/acados_codegen.stamp")
 add_custom_command(
   OUTPUT ${ACADOS_GEN_STAMP}
   BYPRODUCTS ${GENERATED_MPC_FILES}
-  COMMAND ${CMAKE_COMMAND} -E rm -rf ${GEN_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env ${_env_vars}
+  # flock: the Makefiles generator duplicates this recipe into every
+  # consuming target's build.make, so parallel make can run it twice
+  # concurrently; the lock serializes the (self-cleaning) generator.
+  COMMAND flock ${CMAKE_CURRENT_BINARY_DIR}/.acados_codegen.lock
+    ${CMAKE_COMMAND} -E env ${_env_vars}
     ${ACADOS_SOURCE_DIR}/.venv/bin/python3
     ${CMAKE_CURRENT_SOURCE_DIR}/generators/path_tracking_mpc_spatial.py
   COMMAND ${CMAKE_COMMAND} -E touch ${ACADOS_GEN_STAMP}

@@ -153,6 +153,12 @@ class PathTrackingMPCSpatial:
 
 
 def main():
+    # Self-clean: the build system may invoke this generator more than once
+    # (duplicated custom-command recipes under parallel make); each run must
+    # start from an empty export dir or acados_template's makedirs crashes.
+    import shutil
+    shutil.rmtree("c_generated_code", ignore_errors=True)
+
 
     N = 100
     Sf = 100
