@@ -52,16 +52,34 @@ CudaVoxelGridDownsampleFilterNode::CudaVoxelGridDownsampleFilterNode(
 void CudaVoxelGridDownsampleFilterNode::cudaPointcloudCallback(
   const cuda_blackboard::CudaPointCloud2::ConstSharedPtr msg)
 {
-  // The following only checks compatibility with xyzi
-  // (i.e., just check the first four elements of the point field are x, y, z, and intensity
-  // and don't care the rest of the fields)
-  if (!pointcloud_preprocessor::utils::is_data_layout_compatible_with_point_xyzi(msg->fields)) {
-    // This filter assumes float for intensity data type, though the filter supports
-    // other data types for the intensity field, so here just outputs a WARN message.
-    RCLCPP_WARN(
-      this->get_logger(),
-      "Input pointcloud data layout is not compatible with PointXYZI. "
-      "The output result may not be correct");
+  // Accept any of the layouts this package produces and consumes, not only
+  // PointXYZI.
+  //
+  // is_data_layout_compatible_with_point_xyzi requires intensity to be FLOAT32,
+  // while PointXYZIRC and PointXYZIRCAEDT -- the layouts every other node in
+  // this package publishes -- store it as UINT8. Checking xyzi alone therefore
+  // warned on every cloud of a correctly configured pipeline: a 30-second
+  // replay produced over 1500 of these, each saying the result may be wrong
+  // about output that was right. A warning that is always on is a warning
+  // nobody reads.
+  //
+  // The filter itself does not need any of these layouts. It resolves x, y, z
+  // and intensity by field name at runtime (see VoxelInfo::input_xyzi_offset)
+  // and treats return_type and channel as optional, throwing only when a
+  // mandatory field is absent. The check is therefore advisory, and the
+  // throttle below keeps a genuinely unknown layout visible without flooding.
+  const auto & fields = msg->fields;
+  const bool layout_is_known =
+    pointcloud_preprocessor::utils::is_data_layout_compatible_with_point_xyzi(fields) ||
+    pointcloud_preprocessor::utils::is_data_layout_compatible_with_point_xyzirc(fields) ||
+    pointcloud_preprocessor::utils::is_data_layout_compatible_with_point_xyzircaedt(fields);
+  if (!layout_is_known) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 10000,
+      "Input pointcloud layout matches none of PointXYZI, PointXYZIRC or "
+      "PointXYZIRCAEDT. The filter resolves x, y, z and intensity by field name, "
+      "so this is only a problem if one of them is missing or is not FLOAT32 "
+      "for x, y and z.");
   }
 
   auto output_pointcloud_ptr = cuda_voxel_grid_downsample_filter_->filter(msg);
