@@ -125,7 +125,7 @@ std::optional<std::pair<double, double>> ego_passage_interval(const TurnDirectio
   return autoware::behavior_velocity_planner::compute_ego_passage_time_interval(
     ego_future_profile<FuturePosition>(direction), ego_footprint(),
     straight_line_after_entry(direction, ego_straight_offset),
-    straight_line_after_entry(direction, blind_boundary_offset), direction);
+    straight_line_after_entry(direction, blind_boundary_offset));
 }
 
 std::optional<std::pair<double, double>> experimental_ego_passage_interval(
@@ -135,7 +135,7 @@ std::optional<std::pair<double, double>> experimental_ego_passage_interval(
   return autoware::behavior_velocity_planner::experimental::compute_ego_passage_time_interval(
     ego_future_profile<FuturePosition>(direction), ego_footprint(),
     straight_line_after_entry(direction, ego_straight_offset),
-    straight_line_after_entry(direction, blind_boundary_offset), direction);
+    straight_line_after_entry(direction, blind_boundary_offset));
 }
 
 void expect_mirrored_turns_agree(
