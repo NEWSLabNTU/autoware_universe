@@ -16,6 +16,7 @@
 #define EXPERIMENTAL__TIME_TO_COLLISION_HPP_
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
+#include <autoware/lanelet2_utils/intersection.hpp>
 
 #include <autoware_internal_planning_msgs/msg/safety_factor.hpp>
 
@@ -47,6 +48,17 @@ std::optional<std::pair<double, double>> compute_time_interval_for_passing_line(
   const std::vector<FuturePosition> & future_positions,
   const autoware_utils_geometry::LinearRing2d & footprint, const lanelet::ConstLineString3d & line1,
   const lanelet::ConstLineString3d & line2);
+
+/**
+ * @brief compute the time interval in which ego passes the conflict area bounded by
+ * `virtual_ego_straight_path_after_turning` and `virtual_blind_lane_boundary_after_turning`
+ */
+std::optional<std::pair<double, double>> compute_ego_passage_time_interval(
+  const std::vector<FuturePosition> & ego_future_profile,
+  const autoware_utils_geometry::LinearRing2d & footprint,
+  const lanelet::ConstLineString3d & virtual_ego_straight_path_after_turning,
+  const lanelet::ConstLineString3d & virtual_blind_lane_boundary_after_turning,
+  const autoware::experimental::lanelet2_utils::TurnDirection & turn_direction);
 
 /**
  * @brief compute the time interval in which the `object` along the predicted path enters the
