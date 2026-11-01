@@ -360,6 +360,22 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     end_it = it;
   }
 
+  // If the twist right before start_time is also the one right after end_time (stamped exactly
+  // at start_time, none later), the range between them is empty: hold that twist from the start
+  // till the end, as for a single twist
+  if (start_it == end_it) {
+    TwistWithCovarianceStamped twist = *start_it;
+    std::deque<TwistWithCovarianceStamped> simple_twist_deque;
+
+    twist.header.stamp = start_time;
+    simple_twist_deque.push_back(twist);
+
+    twist.header.stamp = end_time;
+    simple_twist_deque.push_back(twist);
+
+    return simple_twist_deque;
+  }
+
   // Create result deque
   std::deque<TwistWithCovarianceStamped> result_deque(start_it, end_it);
 

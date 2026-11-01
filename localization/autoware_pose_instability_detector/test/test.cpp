@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 #include <rcl_yaml_param_parser/parser.h>
 
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -221,6 +222,36 @@ TEST_F(TestPoseInstabilityDetector, does_not_crash_even_if_abnormal_odometry_dat
   // This test is OK if pose_instability_detector does not crash. The diagnostics status is not
   // checked.
   SUCCEED();
+}
+
+TEST(PoseInstabilityDetectorDeadReckon, twist_stamped_at_the_start_and_none_later)  // NOLINT
+{
+  // [Condition] The newest twist carries exactly the start pose's stamp, and none is later. A
+  // simulator stamps the twist and the EKF's odometry on the same clock tick, so they meet.
+  // clip_out_necessary_twist's start and end iterators then both point at that twist, the
+  // range between them is empty, and its front() was read anyway: a garbage stamp, and once
+  // "cannot store a negative time point in rclcpp::Time" killed the node.
+  using geometry_msgs::msg::TwistWithCovarianceStamped;
+  using autoware::pose_instability_detector::PoseInstabilityDetector;
+
+  auto initial_pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  initial_pose->header.stamp.sec = 1;
+  initial_pose->header.stamp.nanosec = 0;
+  initial_pose->pose.position.x = 10.0;
+  initial_pose->pose.orientation.w = 1.0;
+
+  std::deque<TwistWithCovarianceStamped> twists(2);
+  twists[0].header.stamp.sec = 0;
+  twists[0].header.stamp.nanosec = 900000000;
+  twists[0].twist.twist.linear.x = 1.0;
+  twists[1].header.stamp = initial_pose->header.stamp;
+  twists[1].twist.twist.linear.x = 1.0;
+
+  auto estimated = std::make_shared<geometry_msgs::msg::Pose>();
+  const rclcpp::Time end_time(1, 100000000, RCL_ROS_TIME);
+  EXPECT_NO_THROW(PoseInstabilityDetector::dead_reckon(initial_pose, end_time, twists, estimated));
+  EXPECT_NEAR(estimated->position.x, 10.1, 1e-6);
+  EXPECT_NEAR(estimated->position.y, 0.0, 1e-6);
 }
 
 int main(int argc, char ** argv)
