@@ -41,6 +41,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 ament_target_dependencies(${PROJECT_NAME}
+  diagnostic_updater
   grid_map_pcl
   grid_map_ros
   pcl_conversions

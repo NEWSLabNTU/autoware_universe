@@ -84,6 +84,7 @@ cuda_add_library(cuda_pointcloud_preprocessor_lib SHARED
 
 target_link_libraries(cuda_pointcloud_preprocessor_lib
   ${autoware_pointcloud_preprocessor_TARGETS}
+  diagnostic_updater::diagnostic_updater
 )
 
 target_include_directories(cuda_pointcloud_preprocessor_lib SYSTEM PRIVATE

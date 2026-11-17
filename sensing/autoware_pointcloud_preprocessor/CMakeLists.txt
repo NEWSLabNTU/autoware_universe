@@ -80,6 +80,7 @@ target_include_directories(concatenate_data PUBLIC
 
 ament_target_dependencies(concatenate_data
   SYSTEM
+  diagnostic_updater
   autoware_point_types
   autoware_sensing_msgs
   autoware_utils
